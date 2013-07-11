@@ -7,6 +7,14 @@ extern "C"
     #include "xed-interface.h"
 }
 
+
+#include "utility.h"
+#include "varinfer.h"
+
+
+//#include "tracker.h"
+//#include "register.h"
+
 //  analyseProcedure:
 //       analyse a procedure staticaly, check each instrcution from 
 //       the frist to the last of the procedure, 
@@ -30,72 +38,8 @@ extern "C"
 //    ss:  142
 
 
-// the key is the displacement of the variable from ebp
-std::map<xed_int64_t, int> variable_map;
 
-
-//we need to trace change of esp;
-// TODO
-
-
-void  CheckOperand(xed_decoded_inst_t &xedd)
-{
-
-    char buffer[0x100];
-
-    unsigned int operandNum = xed_decoded_inst_noperands(&xedd);
-    //printf("Operand Number: %d\n", operandNum);
-    const xed_operand_values_t* operandPtr = xed_decoded_inst_operands_const(&xedd);
-
-    xed_bool_t mark = xed_operand_values_accesses_memory(operandPtr);
-
-    if(!mark)
-    {
-        //printf("haven't access memory\n");
-        return;
-    }
-    //xed_operand_values_dump(operandPtr, buffer, 0x100);
-    //printf("Operand: %s\n", buffer);
-
-      
-    // XED_CATEGORY_POP    
-    // XED_CATEGORY_PUSH 
-    // we ignore the push or pop instruction
-    xed_category_enum_t category = xed_decoded_inst_get_category(&xedd);
-    if(category == XED_CATEGORY_PUSH || category  == XED_CATEGORY_POP)
-    {
-        return;
-    }
-
-
-    xed_int64_t          disp = xed_operand_values_get_memory_displacement_int64(operandPtr);
-    xed_reg_enum_t   base_reg = xed_operand_values_get_base_reg(operandPtr, 0);
-    xed_reg_enum_t  index_reg = xed_operand_values_get_index_reg(operandPtr, 0);
-    unsigned int       length = xed_operand_values_get_memory_operand_length(operandPtr, 0);
-    unsigned int        scale = xed_operand_values_get_scale(operandPtr);
-    xed_reg_enum_t    seg_reg = xed_operand_values_get_seg_reg(operandPtr, 0); //segment reg
-
-
-    //XED_REG_ESP     
-    //XED_REG_EBP 
-    if(base_reg == XED_REG_EBP && index_reg == XED_REG_INVALID)
-    {
-       variable_map[disp] = 1;
-    }
-
-    //printf("      base reg:  %d\n", base_reg);
-    //printf("     index reg:  %d\n", index_reg);
-    //printf("operand length:  %d\n", length);
-    //printf("         scale:  %d\n", scale);
-    //printf("   segment reg:  %d\n", seg_reg);
-    //printf("  displacement:  %d\n", disp);
-    //printf("\n");
-
-    return;
-}
-
-
-bool analyseProcedure(void *startaddress, void *endAddr)
+bool AnalyseProcedure(void *startaddress, void *endAddr, std::map<int, AbstractVariable*> &container)
 {
 
     const unsigned int maxInstructionLength = 15;   // the max length of a x86 instruction is 15byte
@@ -104,6 +48,11 @@ bool analyseProcedure(void *startaddress, void *endAddr)
 	
     void *currentAddr = startaddress;
     char buffer[1024];
+
+
+    VariableHunter *VarHunter = new VariableHunter(); // initialize the variable hunter
+    VarHunter -> initState();
+
 
     static const xed_state_t dstate = { XED_MACHINE_MODE_LEGACY_32, XED_ADDRESS_WIDTH_32b };
     //currently, we only implement the 32bit machine
@@ -115,7 +64,6 @@ bool analyseProcedure(void *startaddress, void *endAddr)
 	
         xed_decoded_inst_zero_set_mode(&xedd, &dstate);
 	    xed_error_enum_t xedCode = xed_decode(&xedd, (uint8_t*)currentAddr, maxInstructionLength);
-        //we need to get the length of the instruction
 		
 	    if(xedCode == XED_ERROR_NONE)
 	    {
@@ -125,8 +73,10 @@ bool analyseProcedure(void *startaddress, void *endAddr)
             xed_decoded_inst_dump_intel_format(&xedd, buffer, 1024, runtime_address);
             printf("0x%x\t\t%s\n", index, buffer);
 
-            CheckOperand(xedd);
-            //printf("%d\n", instLength);
+
+            VarHunter -> findVariable(xedd);
+            //xed_reg_enum_t reg = DestRegister(xedd);
+            //printf("Destination Register: %d\n", reg);
 
 	        currentAddr += instLength;
             index += instLength;
@@ -135,6 +85,8 @@ bool analyseProcedure(void *startaddress, void *endAddr)
         else
             return false;
     }
+
+    VarHunter -> getResult(container);
 
     return true;
 }
@@ -150,18 +102,23 @@ unsigned char code[] = "\x55\x89\xe5\x83\xec\x70\xc7\x45\xfc\x0f\x84\x01\x00\xc7
 int main()
 {
 
-    int i;
     xed_tables_init();
 
-    //int length = strlen(code);
-    analyseProcedure((void*)code, (void*)(code + 92));
+    std::map<int, AbstractVariable*> container;
+
+
+    // main analyse process
+    AnalyseProcedure((void*)code, (void*)(code + 87), container);
+    
+
     printf("\n\nThe Variables:\n");
 
+    std::map<int, AbstractVariable*>::iterator ptr;
+    int i;
 
-    std::map<xed_int64_t, int>::iterator ptr;
-    for(i = 0, ptr = variable_map.begin(); ptr != variable_map.end(); ptr++, i++)
+    for(i = 0, ptr = container.begin(); ptr != container.end(); ptr++, i++)
     {
-        printf("variable %d: ebp%d\n", i, ptr -> first);
+        printf("variable %d: offset: %d, size: %d\n", i, (ptr -> second) -> offset, (ptr -> second) -> size);
     }
 
     return 0;
