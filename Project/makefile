@@ -14,19 +14,22 @@ SRCS = main.cpp       \
        utility.cpp    \
        register.cpp   \
        tracker.cpp    \
-       varinfer.cpp 
+       varinfer.cpp   \
+       solver.cpp	
 
 
 HDRS = utility.h      \
        register.h     \
        tracker.h      \
-       varinfer.h
+       varinfer.h     \
+       solver.h
 
 
 OBJECTS = utility.o   \
           tracker.o   \
           register.o  \
           varinfer.o  \
+          solver.o    \
           main.o 
 
 
@@ -49,6 +52,8 @@ tracker.o: tracker.cpp tracker.h
 varinfer.o: varinfer.cpp varinfer.h
 	$(CC) $(CPPFLAGS) -c $<
 
+solver.o: solver.cpp solver.h
+	$(CC) $(CPPFLAGS) -c $<
 
 
 .PHONY: clean

@@ -16,23 +16,7 @@ extern "C"
 }
 #include "register.h"
 #include "tracker.h"
-
-// we need to trace change of esp;
-// Register *RegPtr = new Register();
-// Tracker  *TrackState = new Tracker(RegPtr);
-
-enum VariableLocation {Heap, Stack, Abosulte};  // the possible location of a variables
-
-//typedef xed_reg_enum_t RegisterType;
-
-struct AbstractVariable
-{
-	VariableLocation region;
-	//RegisterType base;
-	int offset;
-	int size;
-};
-
+#include "utility.h"
 
 
 class VariableHunter
@@ -41,24 +25,18 @@ class VariableHunter
 private:
 	std::map<int, AbstractVariable*> stack_variable;
 	std::map<int, AbstractVariable*> heap_variable;
-	std::map<int, AbstractVariable*> abosulte_variable;
+	std::map<int, AbstractVariable*> absolute_variable;
+	std::map<int, AbstractVariable*> temp_variable;  // variables in register.
+	// it would be multimap after wards
 
-	Register *RegPtr;
+
+	//Register *RegPtr;
 	Tracker  *TrackState;       // Tracker will be much more useful when we try to find heap variable.
 
 public:
 
-	VariableHunter()
-	{
-		RegPtr = NULL;
-		TrackState = NULL;
-	}
-
 	~VariableHunter()
 	{
-		if(RegPtr != NULL)
-			delete RegPtr;
-
 		if(TrackState != NULL)
 			delete TrackState;
 	}
@@ -76,7 +54,7 @@ private:
 
 	void findHeapVariable(xed_decoded_inst_t &xedd);
 
-	void findAbosulteVariable(xed_decoded_inst_t &xedd);
+	void findAbsoluteVariable(xed_decoded_inst_t &xedd);
 
 };
 

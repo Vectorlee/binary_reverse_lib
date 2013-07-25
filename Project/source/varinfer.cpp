@@ -7,7 +7,6 @@
 
 
 #include "varinfer.h"
-#include "utility.h"
 #include <math.h>
 #include <stdio.h>
 #include <iterator>
@@ -16,19 +15,20 @@
 void
 VariableHunter::initState()
 {
-	if(RegPtr != NULL)
-		delete RegPtr;
+	//if(RegPtr != NULL)
+	//	delete RegPtr;
 
 	if(TrackState != NULL)
 		delete TrackState;
 
-	RegPtr = new Register();
-	TrackState = new Tracker(RegPtr);
+	//RegPtr = new Register();
+	TrackState = new Tracker();
 
 
 	stack_variable.clear();
 	heap_variable.clear();
-	abosulte_variable.clear();
+	absolute_variable.clear();
+    temp_variable.clear();
 
 }
 
@@ -42,7 +42,7 @@ VariableHunter::findVariable(xed_decoded_inst_t &xedd)
 
     findHeapVariable(xedd);
 
-    findAbosulteVariable(xedd);
+    findAbsoluteVariable(xedd);
 }
 
 
@@ -54,7 +54,8 @@ VariableHunter::findStackVariable(xed_decoded_inst_t &xedd)
     //unsigned int operandNum = xed_decoded_inst_noperands(&xedd);
     const xed_operand_values_t* operandPtr = xed_decoded_inst_operands_const(&xedd);
 
-    bool trackanswer = TrackState -> trackESP(xedd);
+    bool trackanswer;
+    trackanswer = TrackState -> trackESP(xedd);
     ASSERT(trackanswer);
 
     // we need to extract the variable from memory. 
@@ -88,7 +89,7 @@ VariableHunter::findStackVariable(xed_decoded_inst_t &xedd)
     {
     	if(stack_variable.find(disp) == stack_variable.end())
     	{
-    		AbstractVariable *var = new AbstractVariable;
+    		AbstractVariable *var = new AbstractVariable();
 
     		var -> region = Stack;
     		var -> offset = disp;
@@ -108,10 +109,15 @@ VariableHunter::findStackVariable(xed_decoded_inst_t &xedd)
 
     	if(stack_variable.find(disp) == stack_variable.end())
     	{
-    		AbstractVariable *var = new AbstractVariable;
+    		AbstractVariable *var = new AbstractVariable();
 
     		var -> region = Stack;
     		var -> offset = disp;
+
+            // we can assign a size here, if the later calculation change this size, everything is OK
+            // if this variable happen to be a boundary variable, the size of this instruction will be the size of the variable
+            var -> size = xed_operand_values_get_memory_operand_length(operandPtr, 0); 
+            // the unit is byte. 
 
     		stack_variable.insert(std::make_pair<int, AbstractVariable*>(disp, var));
     	}
@@ -128,22 +134,66 @@ VariableHunter::findHeapVariable(xed_decoded_inst_t &xedd)
 }
 
 void 
-VariableHunter::findAbosulteVariable(xed_decoded_inst_t &xedd)
+VariableHunter::findAbsoluteVariable(xed_decoded_inst_t &xedd)
 {
-	//TODO
+    const xed_operand_values_t* operandPtr = xed_decoded_inst_operands_const(&xedd);
+
+    // we need to extract the variable from memory. 
+    xed_bool_t mark = xed_operand_values_accesses_memory(operandPtr);
+    if(!mark){
+        return;
+    }
+
+    // we ignore the push or pop instruction
+    xed_iclass_enum_t iclass = xed_decoded_inst_get_iclass(&xedd);
+
+    if( iclass == XED_ICLASS_PUSH    || iclass  == XED_ICLASS_POP     || 
+        iclass == XED_ICLASS_ENTER   || iclass == XED_ICLASS_LEAVE    ||
+        iclass == XED_ICLASS_RET_FAR || iclass == XED_ICLASS_RET_NEAR )
+    {
+        return;
+    }
+
+    xed_int32_t          disp = (xed_int32_t)xed_operand_values_get_memory_displacement_int64(operandPtr);
+    xed_reg_enum_t   base_reg = xed_operand_values_get_base_reg(operandPtr, 0);
+    xed_reg_enum_t  index_reg = xed_operand_values_get_index_reg(operandPtr, 0);
+
+    
+    if(base_reg == XED_REG_INVALID && index_reg == XED_REG_INVALID)
+    {
+        if(absolute_variable.find(disp) == absolute_variable.end())
+        {
+            AbstractVariable *var = new AbstractVariable();
+
+            var -> region = Absolute;
+            var -> offset = disp;
+
+            // we can assign a size here, if the later calculation change this size, everything is OK
+            // if this variable happen to be a boundary variable, the size of instruction will be the size of variable.
+            var -> size = xed_operand_values_get_memory_operand_length(operandPtr, 0);   
+
+            absolute_variable.insert(std::make_pair<int, AbstractVariable*>(disp, var));
+
+        }
+    }
+
+    return;
 }
 
 
 void 
 VariableHunter::getResult(std::map<int, AbstractVariable*> &container)
 {
-	// caculate the size of variables first.
 
 	std::map<int, AbstractVariable*>::iterator ptr, tmp;
+    int var_index = 0;
+
+
+    // insert stack variable. 
+    // caculate the size of variables first.
     for(ptr = stack_variable.begin(); ptr != stack_variable.end(); ptr++)
     {
-        //printf("variable %d: ebp%d\n", i, ptr -> first);
-        tmp = ptr, tmp++;
+        tmp = stack_variable.upper_bound(ptr -> first);
         if(tmp != stack_variable.end())
         {
         	int size = (tmp -> second) -> offset - (ptr -> second) -> offset;
@@ -151,25 +201,29 @@ VariableHunter::getResult(std::map<int, AbstractVariable*> &container)
         }
     }
 
-
-    // ensure that the if the map is not empty 
-    if(!stack_variable.empty()){
-
-        ptr = stack_variable.end(), ptr--;
-        (ptr -> second) -> size = fabs((ptr -> second) -> offset);
-    }
-    // the size of this variable is unknown. 
-    // we assume that this variable have a size equals to its offset.
-
-
     // put the variables in the container
     for(ptr = stack_variable.begin(); ptr != stack_variable.end(); ptr++)
     {
-    	container.insert(*ptr);
+        var_index++; 
+    	container.insert(std::make_pair<int, AbstractVariable*>(var_index, ptr -> second));
     }
 
 
-    // TODO
-    // insert variables found in other places into the container.
+    // insert abosulte variable. 
+    for(ptr = absolute_variable.begin(); ptr != absolute_variable.end(); ptr++)
+    {
+        tmp = absolute_variable.upper_bound(ptr -> first);
+        if(tmp != absolute_variable.end())
+        {
+            int size = (tmp -> second) -> offset - (ptr -> second) -> offset;
+            (ptr -> second) -> size = size;
+        }
+    }
+
+    for(ptr = absolute_variable.begin(); ptr != absolute_variable.end(); ptr++)
+    {
+        var_index++;
+        container.insert(std::make_pair<int, AbstractVariable*>(var_index, ptr -> second));
+    }
 
 }

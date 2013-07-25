@@ -10,35 +10,43 @@
 #ifndef REGISTER_H
 #define REGISTER_H
 
-
+extern "C"
+{
+    #include "xed-interface.h"
+}
 #include "utility.h"
+
 
 class Register
 {
 private:
-	int EAX;   //the common registers
-	int EBX;
-	int ECX;
-	int EDX;
+	AbstractVariable *EAX;   // the common registers
+	AbstractVariable *EBX;   // we don't need to separate EAX and AX.                             
+	AbstractVariable *ECX;   // if there is a variable in AX, the whole EAX is occupied.
+	AbstractVariable *EDX;
 
-	int EBP;
-	int ESP;
 
-	int EDI;
-	int ESI;
-	           //we currently only have used these registers
+    //AX, BX, CX, DX
 
-    int CS;    //the segment registers   
-	int SS;
-	int ES;
-	int DS;
-	int FS;
-	int GS;
+	AbstractVariable *AH, *AL;
+	AbstractVariable *BH, *BL;
+	AbstractVariable *CH, *CL;
+	AbstractVariable *DH, *DL;
 
-	int EIP;   //this state registers
-	int EFLAGS;
+    // if there is a variable hold in AH,
+    // may be there is also a variable hold in AL. that's the reason we need to separate them.
+
+	// if there is some variable in AX, we can extend it as EAX.
+
+	AbstractVariable *EDI;
+	AbstractVariable *ESI;     //we currently only have used these registers
+
+	int EBP;    // we use them to track the offset of variable in stack. 
+	int ESP;    // the esp and ebp can't hold variable
 
 public:
+
+	Register();
 
     // Here actually is the not the real value of ESP, but the relative value, compared to EBP.
     // So the value of ESP here is the distance between ESP and EBP.
@@ -48,6 +56,9 @@ public:
 	void addESP(int value);   // add a value to ESP  
     void subESP(int value);   // sub a value to ESP
     int getESP();             // return the value of ESP
+
+    void setRegister(xed_reg_enum_t src_reg, AbstractVariable* value);
+    AbstractVariable*  getRegister(xed_reg_enum_t src_reg);
 
 };
 
