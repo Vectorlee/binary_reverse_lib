@@ -7,7 +7,7 @@ The ultimate goal of this project is to build a standard function lib that can c
 
 ##2. Code Structure
 
-Under the 'project' floder is the source code of this project. 
+Under the 'project' folder is the source code of this project. 
 
 
         project/   -----    source/
@@ -16,7 +16,7 @@ Under the 'project' floder is the source code of this project.
                    -----    makefile
 
 
-The 'source/' contains all the .cpp files, the 'include/' contains all the .h files. The floder 'xed-ia32/' contains the extra lib we use inorder to conduct our analysis. The lib, named 'x86 XED', helps to decode the instruction and get the operand.
+The 'source/' contains all the .cpp files, the 'include/' contains all the .h files. The folder 'xed-ia32/' contains the extra lib we use inorder to conduct our analysis. The lib, named 'x86 XED', helps to decode the instruction and get the operand.
 
 
 ##3. Usage
@@ -27,7 +27,7 @@ The 'source/' contains all the .cpp files, the 'include/' contains all the .h fi
 
 2. Compile 
 
-    After get the source, cd into the 'project/' floder and type 'make' to compile the source. The extra lib is inside the floder, and it doesn't need any other lib.
+    After get the source, cd into the 'project/' folder and type 'make' to compile the source. The extra lib is inside the folder, and it doesn't need any other lib.
 
     The compiler used in the makefile is **G++**. So make sure you contain the compiler. (Don't need to be the latest version.)
 
@@ -60,6 +60,7 @@ The 'source/' contains all the .cpp files, the 'include/' contains all the .h fi
     and call the two functions in the _main_ function, providing the begin and end address of the arrary. So if you want to change the testing code, just change the char array. 
 
 
+* The folder 'tools' under the root directory contains the source of the testing code used in this project, together with a shell script 'x.sh'. 
 
-
+    You can compile the code using '-c' flag to get the object file, and then  use the shell script to get the '\x55\x89...' form, which you can directly put into the source code of the project as the char arrary.
 
