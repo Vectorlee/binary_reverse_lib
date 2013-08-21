@@ -23,7 +23,7 @@ The 'source/' contains all the .cpp files, the 'include/' contains all the .h fi
 
 1. Get the code.
 
-    Directly clone from the github. URL: https://github.com/honeynet/binary\_reverse\_lib.
+    Directly clone from the github. URL: https://github.com/honeynet/binary_reverse_lib.
 
 2. Compile 
 
