@@ -23,6 +23,12 @@ Register::Register()
 
 	EBP = UNKNOWN;
 	ESP = UNKNOWN;
+
+	// set the flag
+	flagInfo.operandVar1 = NULL;
+	flagInfo.operandVar2 = NULL;
+	flagInfo.calcResult  = NULL;
+	flagInfo.size = 0;
 }
 
 
@@ -149,4 +155,59 @@ Register::setRegister(xed_reg_enum_t src_reg, AbstractVariable* value)
 	}
 
 	return;
+}
+
+
+
+void 
+Register::setFlagInfo(int size, AbstractVariable* var1, AbstractVariable* var2, AbstractVariable* result)
+{
+	// some of these variable may be NULL.
+	flagInfo.operandVar1 = var1;
+	flagInfo.operandVar2 = var2;
+
+	flagInfo.calcResult = result;
+
+	ASSERT(size == 8 || size == 16 || size == 32);
+	flagInfo.size = size;
+}
+
+
+FlagFactor 
+Register::getFlagInfo()
+{
+	return flagInfo;
+}
+
+
+void 
+Register::copyEnvironment(Register* reg_file)
+{
+	// copy the containt of another register class.
+	// this is the environment of the code.
+	EAX = reg_file -> EAX;   //the common registers
+	EBX = reg_file -> EBX;   //reg_file ->                               
+	ECX = reg_file -> ECX;
+	EDX = reg_file -> EDX;
+
+	AH = reg_file -> AH;
+	AL = reg_file -> AL;
+	BH = reg_file -> BH;
+	BL = reg_file -> BL;
+	CH = reg_file -> CH;
+	CL = reg_file -> CL;
+	DH = reg_file -> DH;
+	DL = reg_file -> DL;
+
+	EDI = reg_file -> EDI;
+	ESI = reg_file -> ESI;
+
+	EBP = reg_file -> EBP;   // EBP and ESP is int 
+	ESP = reg_file -> ESP;
+
+	// copy the containt of the flag
+	flagInfo.operandVar1 = reg_file -> flagInfo.operandVar1;
+	flagInfo.operandVar2 = reg_file -> flagInfo.operandVar2;
+	flagInfo.calcResult  = reg_file -> flagInfo.calcResult;
+	flagInfo.size        = reg_file -> flagInfo.size;
 }

@@ -4,31 +4,31 @@
 //
 //
 
-
-
 #include "varinfer.h"
 #include <math.h>
 #include <stdio.h>
 #include <iterator>
 
 
-void
-VariableHunter::initState()
+VariableHunter::VariableHunter()
 {
-	if(regPtr != NULL)
-		delete regPtr;
+    regPtr = new Register();
+    TrackState = new StackTrailer(regPtr);
 
-	if(TrackState != NULL)
-		delete TrackState;
-
-	regPtr = new Register();
-	TrackState = new StackTrailer(regPtr);
-
-
-	stack_variable.clear();
-	heap_variable.clear();
-	absolute_variable.clear();
+    stack_variable.clear();
+    heap_variable.clear();
+    absolute_variable.clear();
     temp_variable.clear();
+}
+
+VariableHunter::~VariableHunter()
+{
+
+    ASSERT(regPtr != NULL);
+    delete regPtr;
+
+    ASSERT(TrackState != NULL);
+    delete TrackState;
 }
 
 

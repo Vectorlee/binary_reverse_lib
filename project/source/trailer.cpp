@@ -74,3 +74,18 @@ StackTrailer::trackESP(xed_decoded_inst_t &xedd)
 
 	return true;
 }
+
+
+
+void 
+StackTrailer::resetEnvironment(Register *reg_file)
+{
+    // set the register class to a new one
+    regPtr = reg_file;
+
+    // so we only need to assign the value of register, 
+    // and we can then change the environment.
+    return;
+    // flag should be inside the register.
+    // it is a component of register environment.
+}

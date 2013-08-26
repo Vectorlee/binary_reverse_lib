@@ -11,8 +11,6 @@
 #include "trailer.h"
 
 #include "constraint.h"
-
-
 extern "C"
 {
     #include "xed-interface.h"
@@ -23,7 +21,7 @@ class TypeHunter
 {
 private:
 
-	Register *regPtr;
+	//Register *regPtr;
 	
 	Tracker  *TrackState;    //the tracker will assign the id to each variable.
 	StackTrailer *trailer;
@@ -33,44 +31,22 @@ private:
 
 	void generateConstraint(xed_decoded_inst_t &xedd);
 
-	void insertConstraint(AbstractVariable* var, int size, int level);
-
-	//void var
-	//void constraintADD(AbstractVariable *var1, AbstractVariable* var2, AbstractVariable* calcResult);
+	//void insertConstraint(AbstractVariable* var, int size, int level);
 
 public:
 
-	TypeHunter(){
+	TypeHunter(std::map<int, AbstractVariable*> &container);
 
-		TrackState = NULL;
-		trailer = NULL;
-		regPtr = NULL;
-
-		typeContainer.clear();
-
-		InitialType();
-	}
-
-	~TypeHunter()
-	{
-		if(TrackState != NULL){
-			delete TrackState;
-		}
-
-		if(trailer != NULL){
-			delete trailer;
-		}
-
-		if(regPtr != NULL){
-			delete regPtr;
-		}
-
-	}
-
-	void initState(std::map<int, AbstractVariable*> &container);
+	~TypeHunter();
  
 	void assignConstraint(xed_decoded_inst_t &xedd);
 
+	void addConstraint(Constraint* cont);
+
+	void resetState(Register* reg_file);
+
+
+	// the final function, get the result from the TypeHunter
 	void getResult(std::list<Constraint*> &container, std::map<int, AbstractVariable*> &variable);
 
 };

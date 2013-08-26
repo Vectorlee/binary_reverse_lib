@@ -35,6 +35,7 @@ public:
 
 	bool trackESP(xed_decoded_inst_t &xedd);
 	
+	void resetEnvironment(Register *reg_file);
 };
 
 

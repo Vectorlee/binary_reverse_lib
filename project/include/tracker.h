@@ -12,22 +12,14 @@
 #include "utility.h"
 #include <list>
 #include <map>
+#include <set>
+
 
 extern "C"
 {
     #include "xed-interface.h"
 }
 
-
-struct FlagFactor
-{
-	int size;
-
-	AbstractVariable* operandVar1;
-	AbstractVariable* operandVar2;
-
-	AbstractVariable* calcResult;
-};
 
 
 class Tracker
@@ -46,6 +38,12 @@ private:
 	std::map<int, AbstractVariable*> absolute_variable;
 
 	std::list<AbstractVariable*> temp_variable;
+	// these four containers contain the variables
+
+	// These two containers contain the nodes and edges.
+	//std::multimap<int, int> *edges_container;
+    //std::set<int> *nodes_container;
+
 
 	//void emptyTrash();
     void setRegister(xed_reg_enum_t dest_reg, AbstractVariable* value) { regPtr -> setRegister(dest_reg, value); }
@@ -64,7 +62,6 @@ public:
 
 	// so we should get a opposite approach, TypeSolver generate thing first, if there is a result
 	// (so called temporary variable), we will pass it to Tracker, or we only pass NULL
-
 
     // we track the movement of variables between registers 
 	bool trackVariable(xed_decoded_inst_t &xedd);
@@ -90,6 +87,8 @@ public:
 
 
     void getResult(std::map<int, AbstractVariable*> &container);
+
+    void resetEnvironment(Register *reg_file);
 
 };
 

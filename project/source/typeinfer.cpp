@@ -5,36 +5,54 @@
 #include "extract.h"
 
 
-
-void
-TypeHunter::initState(std::map<int, AbstractVariable*> &container)
+TypeHunter::TypeHunter(std::map<int, AbstractVariable*> &container)
 {
-
-    if(TrackState != NULL){
-        delete TrackState;
-    }
-
-    if(trailer != NULL){
-        delete trailer;
-    }
-
-    if(regPtr != NULL){
-        delete regPtr;
-    }
-
-
-	regPtr = new Register();
-
+    Register* regPtr = new Register();
     // Tracker and StackTrailer share the Register pointer
     // They can access the register immediately.
 
-	TrackState = new Tracker(container, regPtr);
+    TrackState = new Tracker(container, regPtr);
     trailer = new StackTrailer(regPtr);
 
     typeContainer.clear();
 
-	// TODO
-	// assign other variables map.
+    InitialType();
+
+    //TrackState -> buildCFG(startAddr, endAddr);
+}
+
+
+TypeHunter::~TypeHunter()
+{
+
+    ASSERT(TrackState != NULL);
+    delete TrackState;
+
+    ASSERT(trailer != NULL);
+    delete trailer;
+
+    //ASSERT(regPtr != NULL);
+    //delete regPtr;
+}
+
+
+void
+TypeHunter::resetState(Register* reg_file)
+{
+    //regPtr = reg_file; // we don't need to store the register
+
+    TrackState -> resetEnvironment(reg_file);
+    trailer -> resetEnvironment(reg_file);
+    // reset the environment.
+    return;
+}
+
+
+void 
+TypeHunter::addConstraint(Constraint* cont)
+{
+    typeContainer.insert(typeContainer.end(), cont);
+    return;
 }
 
 

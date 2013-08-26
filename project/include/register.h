@@ -17,6 +17,17 @@ extern "C"
 #include "utility.h"
 
 
+struct FlagFactor
+{
+	int size;
+
+	AbstractVariable* operandVar1;
+	AbstractVariable* operandVar2;
+
+	AbstractVariable* calcResult;
+};
+
+
 class Register
 {
 private:
@@ -25,9 +36,7 @@ private:
 	AbstractVariable *ECX;   // if there is a variable in AX, the whole EAX is occupied.
 	AbstractVariable *EDX;
 
-
     //AX, BX, CX, DX
-
 	AbstractVariable *AH, *AL;
 	AbstractVariable *BH, *BL;
 	AbstractVariable *CH, *CL;
@@ -37,12 +46,13 @@ private:
     // may be there is also a variable hold in AL. that's the reason we need to separate them.
 
 	// if there is some variable in AX, we can extend it as EAX.
-
 	AbstractVariable *EDI;
 	AbstractVariable *ESI;     //we currently only have used these registers
 
 	int EBP;    // we use them to track the offset of variable in stack. 
 	int ESP;    // the esp and ebp can't hold variable
+
+	FlagFactor flagInfo;
 
 public:
 
@@ -59,6 +69,13 @@ public:
 
     void setRegister(xed_reg_enum_t src_reg, AbstractVariable* value);
     AbstractVariable*  getRegister(xed_reg_enum_t src_reg);
+
+    //copy a register class to a new register class.
+    void copyEnvironment(Register* reg_file);
+
+
+    void setFlagInfo(int size, AbstractVariable* var1, AbstractVariable* var2, AbstractVariable* result);
+    FlagFactor getFlagInfo();
 
 };
 

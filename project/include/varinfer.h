@@ -36,21 +36,9 @@ private:
 
 public:
 
-	VariableHunter(){
-		regPtr = NULL;
-		TrackState = NULL;
-	}
+	VariableHunter();
 
-	~VariableHunter()
-	{
-		if(regPtr != NULL)
-			delete regPtr;
-
-		if(TrackState != NULL)
-			delete TrackState;
-	}
-
-	void initState();
+	~VariableHunter();
 
 	void findVariable(xed_decoded_inst_t &xedd);
 

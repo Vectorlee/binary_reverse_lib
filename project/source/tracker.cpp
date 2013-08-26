@@ -17,7 +17,6 @@ Tracker::Tracker(std::map<int, AbstractVariable*> &container, Register* reg)
 	stack_variable.clear();
 	heap_variable.clear();
 	absolute_variable.clear();
-    
 
     std::map<int, AbstractVariable*>::iterator itr;
 	for(itr = container.begin(); itr != container.end(); itr++)
@@ -57,21 +56,6 @@ Tracker::~Tracker()
 	// here we don't delete the variable, because the variable will be moved out.
 	// outer program will use variables.
 }
-
-/*
-void Tracker::emptyTrash()
-{
-	if(temp_variable.size() != 0)
-	{
-		std::list<AbstractVariable*>::iterator ptr;
-		for(ptr = temp_variable.begin(); ptr != temp_variable.end(); ptr++)
-		{
-			AbstractVariable* var = *ptr;
-			delete var;
-		}
-	}
-}
-*/
 
 
 AbstractVariable*
@@ -156,21 +140,15 @@ Tracker::setTempVariable(xed_reg_enum_t dest_reg, AbstractVariable* value)
 void 
 Tracker::setFlagInfo(int size, AbstractVariable* var1, AbstractVariable* var2, AbstractVariable* result)
 {
-	// some of these variable may be NULL.
-	flagInfo.operandVar1 = var1;
-	flagInfo.operandVar2 = var2;
-
-	flagInfo.calcResult = result;
-
-	ASSERT(size == 8 || size == 16 || size == 32);
-	flagInfo.size = size;
+    regPtr -> setFlagInfo(size, var1, var2, result);
+    return;
 }
 
 
 FlagFactor 
 Tracker::getFlagInfo()
 {
-	return flagInfo;
+	return regPtr -> getFlagInfo();
 }
 
 //--------------------------------------------
@@ -182,7 +160,6 @@ Tracker::getFlagInfo()
 // This function need to be more tricky, it will need 
 // the data flow analysis.
 //--------------------------------------------
-
 
 bool 
 Tracker::trackVariable(xed_decoded_inst_t &xedd)
@@ -265,8 +242,6 @@ Tracker::trackVariable(xed_decoded_inst_t &xedd)
 }
 
 
-
-
 void 
 Tracker::getResult(std::map<int, AbstractVariable*> &container)
 {
@@ -275,7 +250,6 @@ Tracker::getResult(std::map<int, AbstractVariable*> &container)
 	//std::map<int, AbstractVariable*> absolute_variable;
 
 	//std::list<AbstractVariable*> temp_variable;
-
 	ASSERT(container.empty());
 
 	std::map<int, AbstractVariable*>::iterator ptr;
@@ -298,3 +272,18 @@ Tracker::getResult(std::map<int, AbstractVariable*> &container)
 	}
 
 }
+
+
+void 
+Tracker::resetEnvironment(Register *reg_file)
+{
+    // set the register class to a new one
+    regPtr = reg_file;
+
+    // so we only need to assign the value of register, 
+    // and we can then change the environment.
+    return;
+    // flag should be inside the register.
+    // it is a component of register environment.
+}
+

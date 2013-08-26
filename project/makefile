@@ -19,6 +19,7 @@ SRCS = main.cpp       \
        typeinfer.cpp  \
        constraint.cpp \
        typeslvr.cpp   \
+       typemgr.cpp    \
        extract.cpp
 	
 
@@ -31,6 +32,7 @@ HDRS = utility.h      \
        typeinfer.h    \
        constraint.h   \
        typeslvr.h     \
+       typemgr.h    \
        extract.h
 
 
@@ -44,6 +46,7 @@ OBJECTS = utility.o    \
           constraint.o \
           extract.o    \
           typeslvr.o   \
+          typemgr.o    \
           main.o
 
 
@@ -79,6 +82,10 @@ extract.o: extract.cpp extract.h
 	$(CC) $(CPPFLAGS) -c $<
 
 typeslvr.o: typeslvr.cpp typeslvr.h
+	$(CC) $(CPPFLAGS) -c $<
+
+
+typemgr.o: typemgr.cpp typemgr.h
 	$(CC) $(CPPFLAGS) -c $<
 
 
