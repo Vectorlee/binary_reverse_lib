@@ -399,6 +399,81 @@ ConstraintMOVX(TYPE* type1, TYPE* type2, AbstractVariable *var1, AbstractVariabl
     return Q;
 }
 
+// this is for the merge function.
+Constraint* 
+ConstraintEqual(int var1, int var2)
+{
+    ASSERT(var1 != 0 && var2 != 0);
+    // only for mem <- reg
+
+    Constraint *Q = new Constraint();
+    
+    Partial* P = new std::list<Element*>(); 
+    Element *cons1;
+
+    // operand var1
+    cons1 = new Element();
+    cons1 -> equalTypeSet(var1, var2, 0);  // operand
+    P -> insert( P -> end(), cons1);
+
+    Q -> addPart(P);
+
+    return Q;
+}
+
+
+// only used in merge.
+
+Constraint* 
+ConstraintMerge(int var1, std::list<int> var_list)
+{
+
+    ASSERT(var1 != 0);
+    // only for mem <- reg
+
+    Constraint *Q = new Constraint();
+    
+    Partial* P = new std::list<Element*>(); 
+    Element *cons1;
+
+    // operand var1
+    std::list<int>::iterator ptr;
+    for(ptr = var_list.begin(); ptr != var_list.end(); ptr++)
+    {
+        // var1 is always the same one, but var2 is keep changing.
+        int var2 = (*ptr);
+        cons1 = new Element();
+        cons1 -> subTypeSet(var1, var2, 0);  // for the first time, we have the subtype relation.
+        P -> insert( P -> end(), cons1);     // which have variable in both side.
+    }
+
+
+    Q -> addPart(P);
+
+    return Q;
+}
+
+Constraint* ConstraintLEA(AbstractVariable* contain, AbstractVariable* calcResult)
+{
+
+    //ASSERT(var1 != NULL);
+    Constraint *Q = new Constraint();
+    
+    Partial* P = new std::list<Element*>(); 
+    Element *cons1;
+
+    // operand var1
+    cons1 = new Element();
+
+    PTR_T* type = new PTR_T();
+    type -> setContain(contain);
+
+    cons1 -> equalTypeSet(calcResult -> id, type, 0);  // operand
+    P -> insert( P -> end(), cons1);
+
+    Q -> addPart(P);
+    return Q;    
+}
 
 
 Constraint*

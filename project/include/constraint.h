@@ -4,6 +4,8 @@
 
 
 #include <list>
+#include "utility.h"
+
 
 enum TypeName { REGISTER, NUMBER, INTEGER, POINTER, ALL };
 
@@ -84,7 +86,7 @@ class PTR_T: public TYPE
 {
 	// for pointer, the size is redundent.
 private:
-	TYPE* contain;
+	AbstractVariable *contain;
 
 public:
 
@@ -94,15 +96,15 @@ public:
 
 		level = 2;
 
-		contain = new TYPE();   // assume the new pointers are all (void*)
+		contain = NULL;     //= new TYPE();   // assume the new pointers are all (void*)
 	}
 
-	void setType(TYPE* type){
-		contain = type;
+	void setContain(AbstractVariable* var){
+		contain = var;
 	}
 
-	TYPE* getType(){
-		return contain;
+	AbstractVariable* getContain(){
+		return contain; // this could be NULL.
 	}
 
 };

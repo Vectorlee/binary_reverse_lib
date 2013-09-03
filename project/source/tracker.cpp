@@ -5,6 +5,7 @@
 //
 
 #include "tracker.h"
+#include "extract.h"
 #include <stdio.h>
 
 
@@ -59,7 +60,7 @@ Tracker::~Tracker()
 
 
 AbstractVariable*
-Tracker::getMemoryVariable(xed_decoded_inst_t &xedd) // std::map<int, AbstractVariable*> &container)
+Tracker::getMemoryVariable(xed_decoded_inst_t &xedd, std::list<Constraint*> &typeContainer) // std::map<int, AbstractVariable*> &container)
 {
 
     xed_iclass_enum_t iclass = xed_decoded_inst_get_iclass(&xedd);
@@ -111,8 +112,48 @@ Tracker::getMemoryVariable(xed_decoded_inst_t &xedd) // std::map<int, AbstractVa
     }
     else
     {
-        // heap variable
-        return NULL;
+        // a variable that pointed by a common register, we need to generate constraints here.
+        // [ base + index * scale + displacement ]
+        int size = (int)xed_operand_values_get_memory_operand_length(operandPtr, 0);
+
+        AbstractVariable* tmp = pointerInfer(base_reg, size, typeContainer);
+        return tmp;
+    }
+
+    return NULL;
+}
+
+
+AbstractVariable*
+Tracker::pointerInfer(xed_reg_enum_t base_reg, int size, std::list<Constraint*> &typeContainer)
+{
+
+    ASSERT(base_reg != XED_REG_ESP && base_reg != XED_REG_EBP);
+
+    AbstractVariable* var = this -> getRegister(base_reg);   // the variable stored in base register.
+    // this must be a pointer.
+
+    if(var != NULL){
+
+        AbstractVariable* tmp = new AbstractVariable();
+        tmp -> region = Temporary;
+        tmp -> size = size;
+
+        // we need to set temporary variable here, but this time, there is no register to hold this temporary variable.
+        // still, we need to get an index for this.
+        // ---------------------------------------------------
+        tmp -> id = varIndex;
+        varIndex++;
+
+        temp_variable.insert(temp_variable.begin(), tmp);
+        // ---------------------------------------------------
+
+        // generate new constraints, to indicate that the base register hold an pointer
+        // var is a pointer contains the tmp.
+        Constraint *Q = ConstraintLEA(tmp, var);           // generate a pointer type, with the contain as the result.
+        typeContainer.insert(typeContainer.end(), Q);
+
+        return tmp;  
     }
 
     return NULL;
@@ -134,7 +175,6 @@ Tracker::setTempVariable(xed_reg_enum_t dest_reg, AbstractVariable* value)
 	// is temporary, if it is, insert it to temp_variable.
 	regPtr -> setRegister(dest_reg, value); 
 }
-
 
 
 void 
@@ -162,7 +202,7 @@ Tracker::getFlagInfo()
 //--------------------------------------------
 
 bool 
-Tracker::trackVariable(xed_decoded_inst_t &xedd)
+Tracker::trackVariable(xed_decoded_inst_t &xedd, std::list<Constraint*> &typeContainer)
 {
 	xed_iclass_enum_t iclass = xed_decoded_inst_get_iclass(&xedd);
 
@@ -191,7 +231,7 @@ Tracker::trackVariable(xed_decoded_inst_t &xedd)
             else if(IsRegisterOperand(xedd, 0) && IsMemoryOperand(xedd, 1))   //IsMemoryOperand
             {
                 // how to extract the proper variable. make it a
-                AbstractVariable* var = getMemoryVariable(xedd);
+                AbstractVariable* var = getMemoryVariable(xedd, typeContainer);
                 regPtr -> setRegister(dest_reg, var);
                 answer = true;
             }
@@ -283,7 +323,5 @@ Tracker::resetEnvironment(Register *reg_file)
     // so we only need to assign the value of register, 
     // and we can then change the environment.
     return;
-    // flag should be inside the register.
-    // it is a component of register environment.
 }
 

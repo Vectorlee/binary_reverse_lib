@@ -23,7 +23,9 @@ The 'source/' contains all the .cpp files, the 'include/' contains all the .h fi
 
 1. Get the code.
 
-    Directly clone from the github. URL: https://github.com/honeynet/binary_reverse_lib.
+    Directly clone from the github.
+		
+		git clone https://github.com/honeynet/binary_reverse_lib.git
 
 2. Compile 
 
@@ -39,7 +41,7 @@ The 'source/' contains all the .cpp files, the 'include/' contains all the .h fi
 
 #####Notice:
 
-* The code it self is flexiable, which means you can compile it whether under x86\_32 or x86\_64. But the analysis target is **merely x86\_32**, make sure that you have provided the correct binary.  
+* The code can only be compiled and run in 32-bit linux operating system, I will work on other platform later. 
 
 * The project currently is not a lib, it's a complete program. file 'project/source/main.cpp' contains the main function of this project.
 

@@ -4,7 +4,10 @@
 //
 
 #include "register.h"
+#include "tracker.h"
 #include <stdio.h>
+#include <algorithm>
+
 
 Register::Register()
 {
@@ -158,7 +161,6 @@ Register::setRegister(xed_reg_enum_t src_reg, AbstractVariable* value)
 }
 
 
-
 void 
 Register::setFlagInfo(int size, AbstractVariable* var1, AbstractVariable* var2, AbstractVariable* result)
 {
@@ -211,3 +213,168 @@ Register::copyEnvironment(Register* reg_file)
 	flagInfo.calcResult  = reg_file -> flagInfo.calcResult;
 	flagInfo.size        = reg_file -> flagInfo.size;
 }
+
+
+// private function
+
+void 
+Register::mergeSet(xed_reg_enum_t reg, AbstractVariable* mergeVar, void *trackState, std::multimap<int, int> &container)
+{
+
+	Tracker* TrackState = (Tracker*)trackState;
+	AbstractVariable *regVar = this -> getRegister(reg);
+
+	// if reg_file -> EAX != NULL
+	if(mergeVar != NULL)
+	{
+		//if(this -> EAX == NULL)
+		//	this -> EAX =  mergeVar  //reg_file -> EAX;   // if the current register is NULL, just copy.
+		if(regVar == NULL)
+			this -> setRegister(reg, mergeVar);
+		else{
+			// we need to judge whether this variable is a variable we create newly, or just a variable before.
+			// search the container.
+
+			int id = regVar -> id;  // (this -> EAX) -> id;
+			if(container.find(id) != container.end()){    // this is a newly create merge variable
+			// merege again.
+			    int from = mergeVar -> id;  //reg_file -> EAX -> id;
+			    int to = regVar -> id;      //this -> EAX -> id;
+
+			    //this -> EAX -> size = std::min(reg_file -> EAX -> size, this -> EAX -> size); // set size to smaller one.
+			    regVar -> size = std::min(mergeVar -> size, regVar -> size);
+			    container.insert(std::make_pair(to, from));
+			}
+			else{  // we haven't found any variable in the map, this is an old variable, we need to create a new one for merge.
+
+				int from1 = regVar -> id;    // this -> EAX -> id;
+			    int from2 = mergeVar -> id;  // reg_file -> EAX -> id;
+
+			    if(from1 == from2)       // if each branch share same variable in same variable, just copy once.
+			    	return;
+
+			    AbstractVariable* tmpVar = new AbstractVariable();
+			    tmpVar -> region = Temporary;
+			    // var -> size = std::min(reg_file-> EAX -> size, this -> EAX -> size);
+			    tmpVar -> size = std::min(regVar -> size, mergeVar -> id);
+
+			    TrackState -> setTempVariable(reg, tmpVar);
+
+			    ASSERT(tmpVar -> id != 0);
+			    int to = tmpVar -> id;
+
+			    container.insert(std::make_pair(to, from1));
+			    container.insert(std::make_pair(to, from2));
+			}
+		}
+	}
+
+	return;
+}
+
+
+void 
+Register::mergeEnvironment(Register* reg_file, void *trackState, std::multimap<int, int> &container)
+{
+
+	//ASSERT(this -> EAX != NULL);
+	//ASSERT((this -> EAX -> region == Temporary) && (this -> EAX -> id != 0));
+	// void mergeSet(xed_reg_enum_t reg, AbstractVariable* mergeVar, void *trackState, std::multimap<int, int> &container)
+
+	this -> mergeSet(XED_REG_EAX, reg_file -> EAX, trackState, container);
+	this -> mergeSet(XED_REG_EBX, reg_file -> EBX, trackState, container);
+	this -> mergeSet(XED_REG_ECX, reg_file -> ECX, trackState, container);
+	this -> mergeSet(XED_REG_EDX, reg_file -> EDX, trackState, container);
+	this -> mergeSet(XED_REG_ESI, reg_file -> ESI, trackState, container);
+	this -> mergeSet(XED_REG_EDI, reg_file -> EDI, trackState, container);
+
+	
+	this -> mergeSet(XED_REG_AH, reg_file -> AH, trackState, container);
+	this -> mergeSet(XED_REG_AL, reg_file -> AL, trackState, container);
+	this -> mergeSet(XED_REG_BH, reg_file -> BH, trackState, container);
+	this -> mergeSet(XED_REG_BL, reg_file -> BL, trackState, container);
+	this -> mergeSet(XED_REG_CH, reg_file -> CH, trackState, container);
+	this -> mergeSet(XED_REG_CL, reg_file -> CL, trackState, container);
+	this -> mergeSet(XED_REG_DH, reg_file -> DH, trackState, container);
+	this -> mergeSet(XED_REG_DL, reg_file -> DL, trackState, container);
+
+	return;
+}
+
+
+void 
+Register::Print()
+{
+	if(EAX != NULL)
+		printf("EAX: %d\n", EAX -> id);
+	else
+		printf("EAX: NULL\n");
+
+	if(EBX != NULL)
+		printf("EBX: %d\n", EBX -> id);
+	else
+		printf("EBX: NULL\n");
+	
+	if(ECX != NULL)
+		printf("ECX: %d\n", ECX -> id);
+	else
+		printf("ECX: NULL\n");
+	
+	if(EDX != NULL)
+		printf("EDX: %d\n", EDX -> id);
+	else
+		printf("EDX: NULL\n");
+	
+	if(EDI != NULL)
+		printf("EDI: %d\n", EDI -> id);
+	else
+		printf("EDI: NULL\n");
+	
+	if(ESI != NULL)
+		printf("ESI: %d\n", ESI -> id);
+	else
+		printf("ESI: NULL\n");
+	
+	if(AH != NULL)
+		printf("AH: %d\n", AH -> id);
+	else
+		printf("AH: NULL\n");
+
+	if(AL != NULL)
+		printf("AL: %d\n", AL -> id);
+	else
+		printf("AL: NULL\n");
+		
+	if(BH != NULL)
+		printf("BH: %d\n", BH -> id);
+	else
+		printf("BH: NULL\n");
+	
+	if(BL != NULL)
+		printf("BL: %d\n", BL -> id);
+	else
+		printf("BL: NULL\n");
+	
+	if(CH != NULL)
+		printf("CH: %d\n", CH -> id);
+	else
+		printf("CH: NULL\n");
+	
+	if(CL != NULL)
+		printf("CL: %d\n", CL -> id);
+	else
+		printf("CL: NULL\n");
+	
+	if(DH != NULL)
+		printf("DH: %d\n", DH -> id);
+	else
+		printf("DH: NULL\n");
+	
+	if(DL != NULL)
+		printf("DL: %d\n", DL -> id);
+	else
+		printf("DL: NULL\n");
+
+}
+
+

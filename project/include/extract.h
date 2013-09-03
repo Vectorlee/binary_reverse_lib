@@ -10,6 +10,7 @@
 
 #include "constraint.h"
 #include "utility.h"
+#include <list>
 
 
 Constraint* ConstraintADD(TYPE* type, AbstractVariable *var1, AbstractVariable* var2, AbstractVariable* calcResult);
@@ -56,6 +57,15 @@ Constraint* ConstraintMOV(AbstractVariable *var1, AbstractVariable *var2);
 Constraint* ConstraintMOVX(TYPE* type1, TYPE* type2, AbstractVariable *var1, AbstractVariable *var2);
 
 
+// this two function is designed for merge.
+Constraint* ConstraintEqual(int var1, int var2);
+Constraint* ConstraintMerge(int var1, std::list<int> var_list);
+
+
+Constraint* ConstraintLEA(AbstractVariable* contain, AbstractVariable* calcResult); 
+
+
+// this is designed for the flag.
 Constraint* ConditionFeedback(TYPE* type, AbstractVariable *var1, AbstractVariable* var2, AbstractVariable* calcResult);
 
 #endif

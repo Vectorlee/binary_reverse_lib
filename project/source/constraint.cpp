@@ -1,6 +1,5 @@
 
 #include "constraint.h"
-#include "utility.h"
 #include <string.h>
 
 
@@ -154,7 +153,20 @@ bool type2str(TYPE* type, char *buffer)
 	}
 
 	if(type -> getName() == POINTER){
+		
 		strcpy(buffer, "ptr");
+		AbstractVariable* var = ((PTR_T*)type) -> getContain();
+
+		if(var != NULL)
+		{
+			char contain[8];
+			sprintf(contain, "(%d)", var -> id);
+			strcat(buffer, contain);
+		}
+		else{
+			strcat(buffer, "()");
+		}
+		return true;
 	}
 
 	int size = type -> getSize();

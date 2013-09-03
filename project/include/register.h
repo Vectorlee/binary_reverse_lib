@@ -15,7 +15,10 @@ extern "C"
     #include "xed-interface.h"
 }
 #include "utility.h"
+#include <map>
 
+// we declare the Tracker here, because we need to use the function of this class.
+//class Tracker;
 
 struct FlagFactor
 {
@@ -26,7 +29,6 @@ struct FlagFactor
 
 	AbstractVariable* calcResult;
 };
-
 
 class Register
 {
@@ -54,6 +56,10 @@ private:
 
 	FlagFactor flagInfo;
 
+	//void mergeSet(xed_reg_enum_t reg, void *trackState, );
+	void mergeSet(xed_reg_enum_t reg, AbstractVariable* mergeVar, void *trackState, std::multimap<int, int> &container);
+
+
 public:
 
 	Register();
@@ -72,10 +78,13 @@ public:
 
     //copy a register class to a new register class.
     void copyEnvironment(Register* reg_file);
-
+    
+    void mergeEnvironment(Register* reg_file, void *trackState, std::multimap<int, int> &container);
 
     void setFlagInfo(int size, AbstractVariable* var1, AbstractVariable* var2, AbstractVariable* result);
     FlagFactor getFlagInfo();
+
+    void Print();
 
 };
 

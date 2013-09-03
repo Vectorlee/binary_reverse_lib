@@ -201,6 +201,9 @@ VariableHunter::getResult(std::map<int, AbstractVariable*> &container)
         	(ptr -> second) -> size = size;
         }
     }
+    ptr--; // the last variable in the stack has size of the offset.
+    ptr -> second -> size = fabs(ptr -> second -> offset);
+
 
     // put the variables in the container
     for(ptr = stack_variable.begin(); ptr != stack_variable.end(); ptr++)

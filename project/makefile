@@ -85,7 +85,7 @@ typeslvr.o: typeslvr.cpp typeslvr.h
 	$(CC) $(CPPFLAGS) -c $<
 
 
-typemgr.o: typemgr.cpp typemgr.h
+typemgr.o: typemgr.cpp typeinfer.h
 	$(CC) $(CPPFLAGS) -c $<
 
 

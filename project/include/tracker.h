@@ -10,6 +10,8 @@
 
 #include "register.h"
 #include "utility.h"
+#include "constraint.h"
+
 #include <list>
 #include <map>
 #include <set>
@@ -19,7 +21,6 @@ extern "C"
 {
     #include "xed-interface.h"
 }
-
 
 
 class Tracker
@@ -48,6 +49,8 @@ private:
 	//void emptyTrash();
     void setRegister(xed_reg_enum_t dest_reg, AbstractVariable* value) { regPtr -> setRegister(dest_reg, value); }
 
+    AbstractVariable* pointerInfer(xed_reg_enum_t base_reg, int size, std::list<Constraint*> &typeContainer);
+
 public:
 
 	Tracker(std::map<int, AbstractVariable*> &container, Register* reg);
@@ -64,7 +67,7 @@ public:
 	// (so called temporary variable), we will pass it to Tracker, or we only pass NULL
 
     // we track the movement of variables between registers 
-	bool trackVariable(xed_decoded_inst_t &xedd);
+	bool trackVariable(xed_decoded_inst_t &xedd, std::list<Constraint*> &typeContainer);
 
     // we can't always track successfully using first function.
     // we need some outer information to alert our tracking work, 
@@ -79,7 +82,7 @@ public:
 
 
     AbstractVariable* getRegister(xed_reg_enum_t src_reg) { return regPtr -> getRegister(src_reg); }
-    AbstractVariable* getMemoryVariable(xed_decoded_inst_t &xedd);
+    AbstractVariable* getMemoryVariable(xed_decoded_inst_t &xedd, std::list<Constraint*> &typeContainer);
 
 
     void setFlagInfo(int size, AbstractVariable* var1, AbstractVariable* var2, AbstractVariable* result);
